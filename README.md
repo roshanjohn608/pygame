@@ -1,2 +1,2 @@
 # pygame
-not just another pygame
+< insert temperorary text here >

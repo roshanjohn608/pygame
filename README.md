@@ -1,2 +1,2 @@
 # pygame
-just a pygame
+just another pygame

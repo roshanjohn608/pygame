@@ -1,2 +1,2 @@
 # Pygame
-Just another pygame. More to follow !!
+Just a pygame. More to follow !!

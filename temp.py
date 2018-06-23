@@ -2,7 +2,7 @@ import random, sys, pygame
 from pygame.locals import *
 
 # Global static values
-FPS = 30
+FPS = 100
 WINDOWwIDTH = 640
 WINDOWHIEGHT = 480
 HALF_WINWIDTH = int(WINDOWwIDTH/2)
@@ -10,11 +10,11 @@ HALF_WINHIEGHT = int(WINDOWHIEGHT/2)
 MAP_STRUCTURE = [
                 [1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1],
                 [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
                 [1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+                [1, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+                [1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+                [1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+                [1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
                 [1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 1],
                 [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
                 [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
@@ -28,9 +28,8 @@ PLAYER_SIZE = 30
 BLOCK_SIZE = 30
 BLOCK_SCALE = 30
 PLAYER_MOVE_SPEED = 1
-PLAYER_JUMP_SPEED = 1.75
+PLAYER_JUMP_SPEED = 1
 GRAVITY = 0.01
-COLLISION_SIZE = 28.5
 
 
 # WINDOWwIDTH and WINDOWHIEGHT define the dimensions of th game window
@@ -112,11 +111,11 @@ def GameLoop ():
 
         # Handles jumping
         key_pressed = pygame.key.get_pressed()
-        floor_collide = playerObj['rect'].collidelist(floorObj['rect_list'])
-        if key_pressed[K_SPACE] and floor_collide != -1 :
-            if floorObj['point_list'][floor_collide][1] > playerObj['y'] :
-                playerObj['y_velocity'] = -1 * PLAYER_JUMP_SPEED
-                print('test')
+        floor_collide = detect_collisions(playerObj, floorObj)
+        for collide in floor_collide :
+            if key_pressed[K_SPACE] and collide[0] == 'above' :
+                    playerObj['y_velocity'] = -1 * PLAYER_JUMP_SPEED
+                    print('test')
 
         # Handles all inputs
         for event in pygame.event.get() :
@@ -155,48 +154,47 @@ def GameLoop ():
 # Handles physics of the game
 def run_physics (playerObj, wallObj, floorObj):
 
-    #playerObj['y_acceleration'] = GRAVITY
+    playerObj['y_acceleration'] = GRAVITY
 
-    floor_collide_direction = detect_collisions(playerObj, floorObj)[0]
-    wall_collide_direction = detect_collisions(playerObj, wallObj)[0]
-    floor_collide_element = detect_collisions(playerObj, floorObj)[1]
-    wall_collide_element = detect_collisions(playerObj, wallObj)[1]
+    # Collision handler for player object
+    on_floor = False
+    below_floor = False
+    floor_collide = detect_collisions(playerObj, floorObj)
 
-    #if floor_collide_direction == 'above' :
-    #    playerObj['y'] = floorObj['point_list'][floor_collide_element][1] - COLLISION_SIZE
-    #    playerObj['y_acceleration'] = 0
-    #    if playerObj['y_velocity'] > 0 :
-    #        playerObj['y_velocity'] = 0
-    print(floor_collide_direction, floor_collide_element)
+    for collide in floor_collide :
+        direction = collide[0]
+        element = collide[1]
+        if direction == 'above' :
+            on_floor = True
+            playerObj['y'] = floorObj['point_list'][element][1] - PLAYER_SIZE + 1
+            playerObj['y_acceleration'] = 0
+            if playerObj['y_velocity'] > 0 :
+                playerObj['y_velocity'] = 0
+        elif direction == 'below' :
+            below_floor = True
+            playerObj['y'] = floorObj['point_list'][element][1] + BLOCK_SIZE
+            playerObj['y_velocity'] = 0
 
-    # Handles the collisions
-    #floor_collide = playerObj['rect'].collidelist(floorObj['rect_list'])
-    #wall_collide = playerObj['rect'].collidelist(wallObj['rect_list'])
+    if not on_floor :
+        for collide in floor_collide :
+            direction = collide[0]
+            element = collide[1]
+            if direction == 'left-to' :
+                print('left-to')
+                playerObj['x'] = floorObj['point_list'][element][0] - PLAYER_SIZE
+            elif direction == 'right-to' :
+                print('right-to')
+                playerObj['x'] = floorObj['point_list'][element][0] + BLOCK_SIZE
 
-    #if floor_collide != -1 :
-    #    if floorObj['point_list'][floor_collide][1]  > playerObj['y'] and playerObj['x'] floorObj['point_list]'][floor_collide][0] :
-    #        playerObj['y'] = floorObj['point_list'][floor_collide][1] - 28.5
-    #        playerObj['y_acceleration'] = 0
-    #        if playerObj['y_velocity'] > 0 :
-    #            playerObj['y_velocity'] = 0
-    #    else :
-    #        playerObj['y'] = floorObj['point_list'][floor_collide][1] + 30
-        #if floorObj['point_list'][floor_collide][0] < playerObj['x'] :
-        #    playerObj['x'] = floorObj['point_list'][floor_collide][0] + 30
-        #else :
-        #    playerObj['x'] = floorObj['point_list'][floor_collide][0] - 30
 
-    #if wall_collide != -1 :
-    #    if wallObj['point_list'][wall_collide][0] < playerObj['x'] :
-    #        playerObj['x'] = wallObj['point_list'][wall_collide][0] + 30
-    #    else :
-    #        playerObj['x'] = wallObj['point_list'][wall_collide][0] - 30
+    print(floor_collide)
+    print(playerObj['x'], playerObj['y'])
 
     playerObj['x_velocity'] += playerObj['x_acceleration']
     playerObj['y_velocity'] += playerObj['y_acceleration']
     playerObj['x'] += playerObj['x_velocity']
     playerObj['y'] += playerObj['y_velocity']
-    #print(playerObj['y_velocity'])
+    print(playerObj['y_velocity'])
 
 
 # Terminate the game
@@ -205,30 +203,35 @@ def terminate ():
     sys.exit()
 
 
-# Returns a tuple of the direction and the index
+# Returns a list of all collidiing elements along with their directions
 def detect_collisions (obj, obj_list) :
 
+    collide = False
+    collide_list = []
     half_dist_obj = (obj['size']/2)
     half_dist_obj_list = (obj_list['size']/2)
-    collide = obj['rect'].collidelist(obj_list['rect_list'])
     obj_mid = (obj['x'] + half_dist_obj, obj['y'] + half_dist_obj)
-    obj_list_mid = (obj_list['point_list'][collide][0] + half_dist_obj_list, obj_list['point_list'][collide][1] + half_dist_obj_list)
-    mid_x_difference = obj_mid[0] - obj_list_mid[0]
-    mid_y_difference = obj_mid[1] - obj_list_mid[1]
+    for i in range (len (obj_list['point_list'])) :
 
-    if collide == -1 :
-        return ('nope', collide)
-    else :
-        if abs(mid_y_difference) > abs(mid_x_difference) :
-            if mid_y_difference < 0 :
-                return ('above', collide)
+        if obj['rect'].colliderect(obj_list['rect_list'][i]) :
+            collide = True
+            obj_list_mid = (obj_list['point_list'][i][0] + half_dist_obj_list, obj_list['point_list'][i][1] + half_dist_obj_list)
+            mid_x_difference = obj_mid[0] - obj_list_mid[0]
+            mid_y_difference = obj_mid[1] - obj_list_mid[1]
+
+            if abs(mid_y_difference) > abs(mid_x_difference) :
+                if mid_y_difference < 0 :
+                    collide_list.append(('above', i))
+                else :
+                    collide_list.append(('below', i))
             else :
-                return ('below', collide)
-        else :
-            if mid_x_difference < 0 :
-                return ('left-to', collide)
-            else :
-                return ('right-to', collide)
+                if mid_x_difference < 0 :
+                    collide_list.append(('left-to', i))
+                else :
+                    collide_list.append(('right-to', i))
+    if not collide :
+        collide_list.append(('nope', -1))
+    return collide_list
 
 
 # Draw a surface object as a rect on a surface

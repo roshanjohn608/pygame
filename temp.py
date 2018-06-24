@@ -2,7 +2,7 @@ import random, sys, pygame
 from pygame.locals import *
 
 # Global static values
-FPS = 100
+FPS = 300
 WINDOWwIDTH = 640
 WINDOWHIEGHT = 480
 HALF_WINWIDTH = int(WINDOWwIDTH/2)
@@ -11,25 +11,27 @@ MAP_STRUCTURE = [
                 [1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1],
                 [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
                 [1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [1, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 1],
+                [1, 0, 0, 2, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+                [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+                [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 0, 0, 0, 0, 0, 0, 0, 1],
+                [1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 0, 0, 0, 0, 0, 0, 0, 1],
                 [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
                 [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 1],
+                [1, 2, 2, 2, 2, 2, 2, 0, 0, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 1],
                 [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
                 [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1]
+                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 0, 1],
+                [1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 2, 1]
                 ]
 PLAYER_SIZE = 30
 BLOCK_SIZE = 30
 BLOCK_SCALE = 30
-PLAYER_MOVE_SPEED = 1
+PLAYER_MOVE_SPEED = .75
 PLAYER_JUMP_SPEED = 1
 GRAVITY = 0.01
+BLOCK_JUMP = 2.5
+AI_SIZE = 30
 
 
 # WINDOWwIDTH and WINDOWHIEGHT define the dimensions of th game window
@@ -70,7 +72,7 @@ def GameLoop ():
     # Surface objects
     playerObj = {
                 'rect' : None,
-                'surface' : WALL_IMG,
+                'surface' : PLAYER_IMG,
                 'direction_forward' : True,
                 'x' : HALF_WINWIDTH,
                 'y' : HALF_WINHIEGHT,
@@ -95,7 +97,21 @@ def GameLoop ():
             'point_list' : []
     }
 
-    initialise_game_coordinates(wallObj, floorObj)
+    jumpObj = {
+            'rect_list' : [],
+            'surface' : WALL_IMG,
+            'size' : BLOCK_SIZE,
+            'point_list' : []
+    }
+
+    aiObj = {
+            'rect_list' = [],
+            'surface' = AI_IMG,
+            'size' = AI_SIZE,
+            'point_list' = []
+    }
+
+    initialise_game_coordinates(wallObj, floorObj, jumpObj)
 
     # Main game loop, which runs each loop/state of the game
     while True:
@@ -105,46 +121,33 @@ def GameLoop ():
         playerObj['rect'] = None
         del wallObj['rect_list'][:]
         del floorObj['rect_list'][:]
+        del jumpObj['rect_list'][:]
         draw_rect(playerObj, DISPLAYSURF)
         update_list_of_rects(wallObj, DISPLAYSURF)
         update_list_of_rects(floorObj, DISPLAYSURF)
+        update_list_of_rects(jumpObj, DISPLAYSURF)
 
-        # Handles jumping
-        key_pressed = pygame.key.get_pressed()
-        floor_collide = detect_collisions(playerObj, floorObj)
-        for collide in floor_collide :
-            if key_pressed[K_SPACE] and collide[0] == 'above' :
-                    playerObj['y_velocity'] = -1 * PLAYER_JUMP_SPEED
-                    print('test')
+        run_physics(playerObj, wallObj, floorObj, jumpObj)
 
         # Handles all inputs
         for event in pygame.event.get() :
-            if event.type == QUIT :
+            if event.type == QUIT or ( event.type == KEYDOWN and event.key == K_ESCAPE ) :
                 terminate()
 
-            elif event.type == KEYDOWN :
-                if event.key == K_ESCAPE :
-                    terminate()
-                elif event.key == K_a :
-                    playerObj['x_velocity'] = -1 * PLAYER_MOVE_SPEED
-                elif event.key == K_d :
-                    playerObj['x_velocity'] = 1 * PLAYER_MOVE_SPEED
-                elif event.key == K_w :
-                    playerObj['y_velocity'] = -1 * PLAYER_MOVE_SPEED
-                elif event.key == K_s :
-                    playerObj['y_velocity'] = 1 * PLAYER_MOVE_SPEED
+        key_pressed = pygame.key.get_pressed()
+        floor_collide = detect_collisions(playerObj, floorObj)
 
-            elif event.type == KEYUP :
-                if event.key == K_a and playerObj['x_velocity'] < 0 :
-                    playerObj['x_velocity'] = 0
-                elif event.key == K_d and playerObj['x_velocity'] > 0 :
-                    playerObj['x_velocity'] = 0
-                elif event.key == K_w and playerObj['y_velocity'] < 0 :
-                    playerObj['y_velocity'] = 0
-                elif event.key == K_s and playerObj['y_velocity'] > 0 :
-                    playerObj['y_velocity'] = 0
+        for collide in floor_collide :
 
-        run_physics(playerObj, wallObj, floorObj)
+            if key_pressed[K_SPACE] and collide[0] == 'above' :
+                playerObj['y_velocity'] = -1 * PLAYER_JUMP_SPEED
+
+        print(floor_collide)
+        playerObj['x_velocity'] = 0
+        if key_pressed[K_a] :
+            playerObj['x_velocity'] += -1 * PLAYER_MOVE_SPEED
+        elif key_pressed[K_d] :
+            playerObj['x_velocity'] += 1 * PLAYER_MOVE_SPEED
 
         # Update the display surface onto the screen
         pygame.display.update()
@@ -152,13 +155,29 @@ def GameLoop ():
 
 
 # Handles physics of the game
-def run_physics (playerObj, wallObj, floorObj):
+def run_physics (playerObj, wallObj, floorObj, jumpObj):
 
     playerObj['y_acceleration'] = GRAVITY
 
     # Collision handler for player object
     on_floor = False
     below_floor = False
+
+    jump_collide = detect_collisions(playerObj, jumpObj)
+
+    for collide in jump_collide :
+        direction = collide[0]
+        element = collide[1]
+        if direction == 'above' :
+            on_floor = True
+            playerObj['y'] = jumpObj['point_list'][element][1] - PLAYER_SIZE + 1
+            playerObj['y_velocity'] = 0
+            playerObj['y_acceleration'] = -1 * BLOCK_JUMP
+        elif direction == 'below' :
+            below_floor = True
+            playerObj['y'] = jumpObj['point_list'][element][1] + BLOCK_SIZE
+            playerObj['y_velocity'] = 0
+
     floor_collide = detect_collisions(playerObj, floorObj)
 
     for collide in floor_collide :
@@ -186,15 +205,33 @@ def run_physics (playerObj, wallObj, floorObj):
                 print('right-to')
                 playerObj['x'] = floorObj['point_list'][element][0] + BLOCK_SIZE
 
+    for collide in jump_collide :
+        direction = collide[0]
+        element = collide[1]
+        if direction == 'left-to' :
+            print('left-to')
+            playerObj['x'] = jumpObj['point_list'][element][0] - PLAYER_SIZE
+        elif direction == 'right-to' :
+            print('right-to')
+            playerObj['x'] = jumpObj['point_list'][element][0] + BLOCK_SIZE
 
-    print(floor_collide)
-    print(playerObj['x'], playerObj['y'])
+    wall_collide = detect_collisions(playerObj, wallObj)
+
+    for collide in wall_collide :
+        direction = collide[0]
+        element = collide[1]
+        if direction == 'left-to' :
+            print('left-to')
+            playerObj['x'] = wallObj['point_list'][element][0] - PLAYER_SIZE
+        elif direction == 'right-to' :
+            print('right-to')
+            playerObj['x'] = wallObj['point_list'][element][0] + BLOCK_SIZE
 
     playerObj['x_velocity'] += playerObj['x_acceleration']
     playerObj['y_velocity'] += playerObj['y_acceleration']
     playerObj['x'] += playerObj['x_velocity']
     playerObj['y'] += playerObj['y_velocity']
-    print(playerObj['y_velocity'])
+    #print(playerObj['y_velocity'])
 
 
 # Terminate the game
@@ -258,7 +295,7 @@ def update_list_of_rects (obj_list, display_surf):
 
 
 # Convert MAP_STRUCTURE into game coordinates
-def initialise_game_coordinates (wall_list, floor_list):
+def initialise_game_coordinates (wall_list, floor_list, jump_list):
 
     for x in range (len (MAP_STRUCTURE)):
         for y in range (len (MAP_STRUCTURE[x])):
@@ -266,7 +303,8 @@ def initialise_game_coordinates (wall_list, floor_list):
                 wall_list['point_list'].append((y*BLOCK_SCALE, x*BLOCK_SCALE))
             elif MAP_STRUCTURE[x][y] == 2 :
                 floor_list['point_list'].append((y*BLOCK_SCALE, x*BLOCK_SCALE))
-
+            elif MAP_STRUCTURE[x][y] == 3 :
+                jump_list['point_list'].append((y*BLOCK_SCALE, x*BLOCK_SCALE))
 
 if __name__ == '__main__' :
     main()

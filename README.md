@@ -1,2 +1,2 @@
 # Pygame
-Just yene pygame. More to follow !!
+Just a simple game made with the python pygame module.
